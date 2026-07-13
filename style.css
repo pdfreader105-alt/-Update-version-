@@ -1,0 +1,320 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Serif+Bengali:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --ink: #1c211d;
+  --deep: #0c3d2c;
+  --deep2: #062820;
+  --gold: #b8934c;
+  --gold-bright: #d9b56a;
+  --paper: #f8f2e2;
+  --paper-card: #fffcf3;
+  --muted: #756b58;
+  --line: #e4d9bd;
+  --wrong: #a6432f;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+button { font-family: inherit; }
+
+.app-root {
+  min-height: 100vh;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-bottom: 68px;
+  background: var(--paper);
+}
+
+/* ---- HEADER ---- */
+.app-header {
+  position: relative;
+  background: linear-gradient(155deg, var(--deep) 0%, var(--deep2) 100%);
+  color: #f4ead0;
+  padding: 20px 18px 14px;
+  overflow: hidden;
+  border-bottom: 2px solid var(--gold);
+}
+.header-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.08;
+  background-image: radial-gradient(circle at 1px 1px, #f4ead0 1px, transparent 1px);
+  background-size: 16px 16px;
+  pointer-events: none;
+}
+.corner { position: absolute; width: 26px; height: 26px; color: var(--gold-bright); }
+.corner-tl { top: 8px; left: 8px; }
+.corner-tr { top: 8px; right: 8px; transform: scaleX(-1); }
+
+.header-inner { position: relative; z-index: 1; }
+.brand-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.brand-mark {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: rgba(217,181,106,0.12);
+  border: 1px solid var(--gold);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold-bright); flex-shrink: 0;
+}
+.brand-text h1 {
+  font-family: 'Amiri', serif;
+  font-size: 24px;
+  margin: 0;
+  color: var(--gold-bright);
+  line-height: 1.3;
+}
+.brand-text p {
+  font-family: 'Noto Serif Bengali', serif;
+  font-size: 11.5px;
+  color: #d8cba8;
+  margin: 3px 0 0;
+}
+
+.search-row {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--paper-card);
+  border-radius: 999px;
+  padding: 10px 14px;
+  border: 1px solid rgba(217,181,106,0.4);
+}
+.search-icon { color: var(--gold); flex-shrink: 0; }
+.search-input {
+  border: none; outline: none; background: transparent;
+  font-family: 'Noto Serif Bengali', serif;
+  font-size: 14px; color: var(--ink); flex: 1; min-width: 0;
+}
+.search-input::placeholder { color: #a89a7c; }
+.clear-btn { background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px; display: none; }
+.clear-btn.show { display: flex; }
+
+.unit-bar { position: relative; z-index: 1; margin-top: 12px; }
+.unit-toggle {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(217,181,106,0.14);
+  border: 1px solid rgba(217,181,106,0.5);
+  color: var(--gold-bright);
+  border-radius: 10px;
+  padding: 9px 12px;
+  width: 100%;
+  font-family: 'Noto Serif Bengali', serif;
+  font-size: 13px;
+  cursor: pointer;
+}
+.unit-toggle .unit-toggle-label { flex: 1; text-align: left; }
+.unit-count-pill {
+  background: var(--gold); color: var(--deep2);
+  font-family: 'Inter', sans-serif; font-weight: 700;
+  font-size: 11px; padding: 2px 8px; border-radius: 999px;
+}
+.chev { transition: transform 0.2s; }
+.chev.open { transform: rotate(90deg); }
+
+/* ---- UNIT MENU ---- */
+.unit-menu-backdrop {
+  position: fixed; inset: 0; background: rgba(6,26,20,0.55);
+  z-index: 40; display: none; align-items: flex-end;
+}
+.unit-menu-backdrop.open { display: flex; }
+.unit-menu {
+  background: var(--paper-card);
+  width: 100%; max-width: 480px; margin: 0 auto;
+  border-radius: 18px 18px 0 0;
+  max-height: 72vh; display: flex; flex-direction: column;
+  border-top: 2px solid var(--gold);
+}
+.unit-menu-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid var(--line);
+  font-family: 'Noto Serif Bengali', serif; font-weight: 600; color: var(--deep);
+}
+.unit-menu-list { overflow-y: auto; padding: 6px 0; }
+.unit-row {
+  width: 100%; display: flex; align-items: center; gap: 10px;
+  background: none; border: none; text-align: left;
+  padding: 11px 16px; cursor: pointer; border-bottom: 1px solid #f0e9d3;
+}
+.unit-row.selected { background: rgba(184,147,76,0.1); }
+.radio-dot {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 1.5px solid var(--gold); flex-shrink: 0;
+}
+.unit-row.selected .radio-dot { background: var(--gold); }
+.unit-row-label {
+  flex: 1; font-family: 'Noto Serif Bengali', serif; font-size: 13.5px; color: var(--ink);
+}
+.unit-row-count { font-size: 11px; color: var(--muted); }
+
+/* ---- MAIN ---- */
+.main-area { flex: 1; }
+.view { display: none; }
+.view.active { display: block; }
+.view-pad { padding: 16px 14px 24px; }
+.result-line {
+  font-family: 'Noto Serif Bengali', serif; font-size: 12.5px;
+  color: var(--muted); margin-bottom: 12px;
+}
+.result-unit { color: var(--gold); }
+
+.card-grid { display: flex; flex-direction: column; gap: 10px; }
+.word-card {
+  background: var(--paper-card);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 1px 2px rgba(12,61,44,0.04);
+}
+.word-card-top { display: flex; align-items: center; gap: 10px; }
+.arabic-word {
+  flex: 1; font-family: 'Amiri', serif; font-size: 22px;
+  color: var(--deep); text-align: right; line-height: 1.5;
+}
+.icon-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); padding: 5px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.fav-btn { color: #b8385c; }
+.fav-btn svg { transition: transform 0.15s; }
+.fav-btn.active svg { transform: scale(1.1); }
+.speak-btn { color: var(--deep); }
+.word-card-divider { height: 1px; background: var(--line); margin: 10px 0; }
+.bn-word {
+  font-family: 'Noto Serif Bengali', serif; font-weight: 600;
+  font-size: 15px; color: var(--ink); margin-bottom: 2px;
+}
+.en-word { font-size: 12px; color: var(--muted); font-style: italic; }
+
+.load-more-btn {
+  width: 100%; margin-top: 16px; padding: 12px;
+  background: var(--deep); color: var(--gold-bright);
+  border: none; border-radius: 12px; cursor: pointer;
+  font-family: 'Noto Serif Bengali', serif; font-size: 13.5px;
+}
+
+.empty-state {
+  text-align: center; padding: 50px 20px; color: var(--muted);
+  font-family: 'Noto Serif Bengali', serif; font-size: 13.5px;
+}
+.star-divider {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  margin-bottom: 14px; color: var(--gold);
+}
+.star-line { width: 40px; height: 1px; background: var(--line); }
+
+/* ---- BOTTOM NAV ---- */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px;
+  background: var(--paper-card);
+  border-top: 1px solid var(--line);
+  display: flex; z-index: 30;
+}
+.nav-btn {
+  flex: 1; background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 9px 0 8px; color: var(--muted);
+  font-family: 'Noto Serif Bengali', serif; font-size: 10.5px;
+}
+.nav-btn.active { color: var(--deep); }
+.nav-btn.active svg { color: var(--gold); }
+
+/* ---- PRACTICE ---- */
+.practice-intro { display: flex; flex-direction: column; gap: 12px; }
+.practice-hero { text-align: center; padding: 18px 10px 22px; color: var(--deep); }
+.practice-hero svg { color: var(--gold); }
+.practice-hero h2 { font-family: 'Amiri', serif; font-size: 22px; margin: 8px 0 4px; }
+.practice-hero p { font-family: 'Noto Serif Bengali', serif; font-size: 12.5px; color: var(--muted); }
+.mode-card {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--paper-card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 14px; cursor: pointer; text-align: left; width: 100%;
+}
+.mode-card-icon {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(184,147,76,0.15); color: var(--deep);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.mode-card-text h3 { font-family: 'Noto Serif Bengali', serif; font-size: 14.5px; margin: 0 0 3px; color: var(--ink); }
+.mode-card-text p { font-size: 11.5px; color: var(--muted); margin: 0; }
+
+.practice-mode { display: flex; flex-direction: column; gap: 16px; }
+.practice-topbar { display: flex; align-items: center; justify-content: space-between; }
+.text-btn {
+  background: none; border: none; color: var(--deep); cursor: pointer;
+  font-family: 'Noto Serif Bengali', serif; font-size: 13px; padding: 4px 0;
+}
+.practice-progress { font-size: 12px; color: var(--muted); }
+
+.flashcard {
+  min-height: 220px; background: var(--paper-card);
+  border: 1px solid var(--line); border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 20px; position: relative;
+  box-shadow: 0 2px 10px rgba(12,61,44,0.06);
+}
+.flash-face { text-align: center; width: 100%; }
+.flash-arabic { font-family: 'Amiri', serif; font-size: 34px; color: var(--deep); margin-bottom: 10px; }
+.flash-hint { font-size: 11.5px; color: var(--muted); font-family: 'Noto Serif Bengali', serif; }
+.speak-btn-lg {
+  margin-top: 8px; width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(184,147,76,0.12); color: var(--deep);
+}
+.flash-bn { font-family: 'Noto Serif Bengali', serif; font-weight: 600; font-size: 20px; color: var(--ink); margin-bottom: 8px; }
+.flash-en { font-size: 13px; color: var(--muted); font-style: italic; }
+
+.flash-actions { display: flex; gap: 10px; }
+.know-btn {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px; border-radius: 12px; border: none; cursor: pointer;
+  font-family: 'Noto Serif Bengali', serif; font-size: 13px;
+}
+.know-btn.no { background: #f3e3de; color: var(--wrong); }
+.know-btn.yes { background: #dcecdf; color: #276b3f; }
+
+.practice-summary { text-align: center; padding: 30px 10px; }
+.practice-summary h3 { font-family: 'Amiri', serif; font-size: 22px; color: var(--deep); margin: 0 0 12px; }
+.summary-stats { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; }
+.stat-pill { padding: 8px 16px; border-radius: 999px; font-size: 12.5px; font-family: 'Noto Serif Bengali', serif; font-weight: 600; }
+.stat-pill.good { background: #dcecdf; color: #276b3f; }
+.stat-pill.bad { background: #f3e3de; color: var(--wrong); }
+.restart-btn { justify-content: center; }
+.quiz-score-text { font-family: 'Noto Serif Bengali', serif; font-size: 14px; color: var(--muted); margin-bottom: 14px; }
+
+.quiz-card { background: var(--paper-card); border: 1px solid var(--line); border-radius: 18px; padding: 22px 18px; text-align: center; }
+.quiz-label { font-family: 'Noto Serif Bengali', serif; font-size: 12.5px; color: var(--muted); margin: 0 0 12px; }
+.quiz-arabic { font-family: 'Amiri', serif; font-size: 30px; color: var(--deep); margin-bottom: 4px; }
+.quiz-speak { margin: 0 auto 16px; }
+.quiz-options { display: flex; flex-direction: column; gap: 9px; }
+.quiz-option {
+  padding: 12px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--paper); cursor: pointer; text-align: left;
+  font-family: 'Noto Serif Bengali', serif; font-size: 13.5px; color: var(--ink);
+}
+.quiz-option.correct { background: #dcecdf; border-color: #276b3f; color: #205c35; }
+.quiz-option.wrong { background: #f3e3de; border-color: var(--wrong); color: var(--wrong); }
+.quiz-next { margin-top: 14px; }
+
+.install-banner {
+  display: none;
+  align-items: center; gap: 10px;
+  background: var(--gold); color: var(--deep2);
+  padding: 10px 14px; font-size: 12.5px;
+  font-family: 'Noto Serif Bengali', serif;
+}
+.install-banner.show { display: flex; }
+.install-banner button {
+  margin-left: auto; background: var(--deep2); color: var(--gold-bright);
+  border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 12px;
+}
+.install-banner .dismiss { background: none; color: var(--deep2); padding: 4px; margin-left: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .chev, .fav-btn svg { transition: none; }
+}

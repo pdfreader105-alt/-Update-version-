@@ -11,6 +11,9 @@
     rotate: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
     check: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
     shuffle: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>',
+    clock: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    flag: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+    grid: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
   };
 
   const STAR_DIVIDER = `<div class="star-divider"><span class="star-line"></span>
@@ -28,6 +31,8 @@
     practiceMode: null,
     flash: null,
     quiz: null,
+    examSetup: { count: 40, customCount: "", minutes: 30, customMinutes: "", source: "all", selectedUnits: [] },
+    exam: null,
   };
 
   const UNIT_ORDER = [];
@@ -181,12 +186,17 @@
     const el = document.getElementById("view-practice");
     const pool = currentPool();
 
-    if (pool.length < 4) {
-      el.innerHTML = `<div class="view-pad">${emptyStateHTML("অনুশীলনের জন্য পর্যাপ্ত শব্দ নেই। অন্য ইউনিট নির্বাচন করুন।")}</div>`;
-      return;
+    if (state.practiceMode === "flash" || state.practiceMode === "quiz") {
+      if (pool.length < 4) {
+        el.innerHTML = `<div class="view-pad">${emptyStateHTML("অনুশীলনের জন্য পর্যাপ্ত শব্দ নেই। অন্য ইউনিট নির্বাচন করুন।")}</div>`;
+        return;
+      }
+      if (state.practiceMode === "flash") return renderFlashcard(el, pool);
+      return renderQuiz(el, pool);
     }
-    if (state.practiceMode === "flash") return renderFlashcard(el, pool);
-    if (state.practiceMode === "quiz") return renderQuiz(el, pool);
+    if (state.practiceMode === "examSetup") return renderExamSetup(el);
+    if (state.practiceMode === "exam") return renderExam(el);
+    if (state.practiceMode === "examResult") return renderExamResult(el);
 
     el.innerHTML = `
       <div class="view-pad practice-intro">
@@ -201,6 +211,10 @@
         <button class="mode-card" id="start-quiz">
           <div class="mode-card-icon">${ICON.check}</div>
           <div class="mode-card-text"><h3>কুইজ মোড</h3><p>সঠিক বাংলা অর্থ বেছে নিয়ে নিজেকে যাচাই করুন</p></div>
+        </button>
+        <button class="mode-card" id="start-exam-setup">
+          <div class="mode-card-icon">${ICON.clock}</div>
+          <div class="mode-card-text"><h3>পরীক্ষা মোড</h3><p>টাইমার সহ ৪০/৫০টি বা কাস্টম সংখ্যক MCQ প্রশ্নের পূর্ণাঙ্গ পরীক্ষা দিন</p></div>
         </button>
       </div>`;
   }
@@ -318,6 +332,326 @@
       </div>`;
   }
 
+  /* ============ EXAM MODE ============ */
+  function getExamSourcePool(setup) {
+    if (setup.source === "current") return currentPool();
+    if (setup.source === "custom") {
+      if (!setup.selectedUnits.length) return [];
+      return DICTIONARY.filter((e) => setup.selectedUnits.includes(e.u));
+    }
+    return DICTIONARY;
+  }
+
+  function renderExamSetup(el) {
+    const setup = state.examSetup;
+    const pool = getExamSourcePool(setup);
+    const countPresets = [40, 50];
+    const minutePresets = [20, 30, 40];
+
+    el.innerHTML = `
+      <div class="view-pad practice-mode">
+        <div class="practice-topbar">
+          <button class="text-btn" id="exit-practice">← ফিরে যান</button>
+        </div>
+        <div class="practice-hero" style="padding-top:2px;">${ICON.clock}
+          <h2>পরীক্ষা মোড</h2>
+          <p>নিজের মতো করে পরীক্ষা সাজিয়ে নিন</p>
+        </div>
+
+        <div class="exam-setup-block">
+          <div class="exam-setup-label">প্রশ্ন সংখ্যা</div>
+          <div class="exam-chip-row">
+            ${countPresets
+              .map(
+                (c) =>
+                  `<button class="exam-chip${setup.count === c && !setup.customCount ? " selected" : ""}" data-count="${c}">${c} টি</button>`
+              )
+              .join("")}
+            <input type="number" class="exam-custom-input" id="custom-count" placeholder="কাস্টম" min="4" max="${DICTIONARY.length}" value="${esc(setup.customCount)}" />
+          </div>
+
+          <div class="exam-setup-label">সময়সীমা</div>
+          <div class="exam-chip-row">
+            ${minutePresets
+              .map(
+                (m) =>
+                  `<button class="exam-chip${setup.minutes === m && !setup.customMinutes ? " selected" : ""}" data-minutes="${m}">${m} মিনিট</button>`
+              )
+              .join("")}
+            <input type="number" class="exam-custom-input" id="custom-minutes" placeholder="কাস্টম" min="1" max="180" value="${esc(setup.customMinutes)}" />
+          </div>
+
+          <div class="exam-setup-label">প্রশ্নের উৎস</div>
+          <div class="exam-source-list">
+            <button class="unit-row${setup.source === "all" ? " selected" : ""}" data-source="all">
+              <span class="radio-dot"></span><span class="unit-row-label">সব ইউনিট (${DICTIONARY.length})</span>
+            </button>
+            <button class="unit-row${setup.source === "current" ? " selected" : ""}" data-source="current">
+              <span class="radio-dot"></span><span class="unit-row-label">বর্তমান নির্বাচিত ইউনিট — ${esc(state.unit)} (${currentPool().length})</span>
+            </button>
+            <button class="unit-row${setup.source === "custom" ? " selected" : ""}" data-source="custom">
+              <span class="radio-dot"></span><span class="unit-row-label">নির্দিষ্ট ইউনিট বাছাই করুন ${setup.source === "custom" ? `(${pool.length})` : ""}</span>
+            </button>
+          </div>
+
+          ${setup.source === "custom" ? renderUnitCheckboxes(setup) : ""}
+
+          <button class="load-more-btn exam-start-btn" id="begin-exam">পরীক্ষা শুরু করুন</button>
+          <p class="exam-hint">${pool.length > 0 ? `${pool.length} টি শব্দের পুল থেকে প্রশ্ন তৈরি হবে` : "অন্তত একটি ইউনিট বেছে নিন"}</p>
+        </div>
+      </div>`;
+  }
+
+  function renderUnitCheckboxes(setup) {
+    return `<div class="exam-unit-checks">
+      ${UNIT_ORDER.map((u) => {
+        const checked = setup.selectedUnits.includes(u);
+        return `<label class="exam-check-row">
+          <input type="checkbox" data-unit-check="${esc(u)}" ${checked ? "checked" : ""} />
+          <span>${esc(u)} (${UNIT_COUNTS[u]})</span>
+        </label>`;
+      }).join("")}
+    </div>`;
+  }
+
+  function effectiveCount() {
+    const s = state.examSetup;
+    const n = s.customCount ? parseInt(s.customCount, 10) : s.count;
+    return Number.isFinite(n) && n > 0 ? n : 40;
+  }
+  function effectiveMinutes() {
+    const s = state.examSetup;
+    const n = s.customMinutes ? parseInt(s.customMinutes, 10) : s.minutes;
+    return Number.isFinite(n) && n > 0 ? n : 30;
+  }
+
+  function startExam() {
+    const setup = state.examSetup;
+    const srcPool = getExamSourcePool(setup);
+    if (srcPool.length < 4) {
+      alert("পর্যাপ্ত শব্দ নেই। অন্তত একটি ইউনিট নির্বাচন করুন যেখানে কমপক্ষে ৪টি শব্দ আছে।");
+      return;
+    }
+    const requestedCount = effectiveCount();
+    const count = Math.min(requestedCount, srcPool.length);
+    const shuffled = shuffleArr(srcPool).slice(0, count);
+
+    const questions = shuffled.map((entry) => {
+      const wrongSourcePool = srcPool.length >= 4 ? srcPool : DICTIONARY;
+      const wrong = shuffleArr(wrongSourcePool.filter((e) => e.i !== entry.i)).slice(0, 3);
+      const options = shuffleArr([entry, ...wrong]);
+      return { entry, options, selected: null, flagged: false };
+    });
+
+    const timeLimitSec = effectiveMinutes() * 60;
+    state.exam = {
+      questions,
+      idx: 0,
+      timeLimitSec,
+      remainingSec: timeLimitSec,
+      startedAt: Date.now(),
+      navOpen: false,
+      timerId: null,
+      submitted: false,
+    };
+    state.practiceMode = "exam";
+    render();
+    startExamTimer();
+  }
+
+  function startExamTimer() {
+    stopExamTimer();
+    const exam = state.exam;
+    if (!exam) return;
+    exam.timerId = setInterval(() => {
+      if (!state.exam) return;
+      state.exam.remainingSec--;
+      if (state.exam.remainingSec <= 0) {
+        state.exam.remainingSec = 0;
+        updateExamTimerDisplay();
+        submitExam(true);
+        return;
+      }
+      updateExamTimerDisplay();
+    }, 1000);
+  }
+
+  function stopExamTimer() {
+    if (state.exam && state.exam.timerId) {
+      clearInterval(state.exam.timerId);
+      state.exam.timerId = null;
+    }
+  }
+
+  function fmtTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function updateExamTimerDisplay() {
+    const exam = state.exam;
+    if (!exam) return;
+    const timerEl = document.getElementById("exam-timer-text");
+    if (timerEl) {
+      timerEl.textContent = fmtTime(exam.remainingSec);
+      const lowTime = exam.remainingSec <= 60;
+      timerEl.parentElement.classList.toggle("low-time", lowTime);
+    }
+    const barEl = document.getElementById("exam-timer-bar");
+    if (barEl) {
+      const pct = Math.max(0, (exam.remainingSec / exam.timeLimitSec) * 100);
+      barEl.style.width = pct + "%";
+    }
+  }
+
+  function renderExam(el) {
+    const exam = state.exam;
+    if (!exam) return;
+    const q = exam.questions[exam.idx];
+    const answeredCount = exam.questions.filter((x) => x.selected != null).length;
+
+    el.innerHTML = `
+      <div class="exam-wrap">
+        <div class="exam-topbar">
+          <div class="exam-timer${exam.remainingSec <= 60 ? " low-time" : ""}">
+            ${ICON.clock}<span id="exam-timer-text">${fmtTime(exam.remainingSec)}</span>
+          </div>
+          <button class="exam-nav-btn" id="open-exam-nav">${ICON.grid} ${exam.idx + 1}/${exam.questions.length}</button>
+          <button class="exam-submit-btn" id="submit-exam">জমা দিন</button>
+        </div>
+        <div class="exam-timer-track"><div class="exam-timer-bar" id="exam-timer-bar" style="width:${(exam.remainingSec / exam.timeLimitSec) * 100}%"></div></div>
+
+        <div class="view-pad exam-body">
+          <div class="quiz-card">
+            <div class="exam-q-head">
+              <p class="quiz-label">প্রশ্ন ${exam.idx + 1} — এই শব্দের সঠিক অর্থ কোনটি?</p>
+              <button class="icon-btn flag-btn${q.flagged ? " active" : ""}" id="toggle-flag">${ICON.flag}</button>
+            </div>
+            <div class="quiz-arabic" dir="rtl" lang="ar">${esc(q.entry.a)}</div>
+            <button class="icon-btn speak-btn-lg quiz-speak" id="exam-speak" data-text="${esc(q.entry.a)}">${ICON.volume}</button>
+            <div class="quiz-options">
+              ${q.options
+                .map(
+                  (opt) =>
+                    `<button class="quiz-option${q.selected === opt.i ? " picked" : ""}" data-exam-opt="${opt.i}">${esc(opt.b)}</button>`
+                )
+                .join("")}
+            </div>
+          </div>
+
+          <div class="exam-footer-nav">
+            <button class="text-btn" id="exam-prev" ${exam.idx === 0 ? "disabled" : ""}>← আগের প্রশ্ন</button>
+            <span class="exam-answered-count">${answeredCount}/${exam.questions.length} উত্তর দেওয়া হয়েছে</span>
+            <button class="text-btn" id="exam-next" ${exam.idx === exam.questions.length - 1 ? "disabled" : ""}>পরের প্রশ্ন →</button>
+          </div>
+        </div>
+
+        ${exam.navOpen ? renderExamNavGrid(exam) : ""}
+      </div>`;
+  }
+
+  function renderExamNavGrid(exam) {
+    return `
+      <div class="unit-menu-backdrop open" id="exam-nav-backdrop">
+        <div class="unit-menu exam-nav-menu">
+          <div class="unit-menu-header">
+            <span>প্রশ্ন তালিকা</span>
+            <button class="icon-btn" id="close-exam-nav">${ICON.x}</button>
+          </div>
+          <div class="exam-nav-legend">
+            <span><i class="dot answered"></i> উত্তর দেওয়া</span>
+            <span><i class="dot flagged"></i> চিহ্নিত</span>
+            <span><i class="dot"></i> বাকি</span>
+          </div>
+          <div class="exam-nav-grid">
+            ${exam.questions
+              .map((q, i) => {
+                let cls = "exam-nav-cell";
+                if (i === exam.idx) cls += " current";
+                if (q.selected != null) cls += " answered";
+                if (q.flagged) cls += " flagged";
+                return `<button class="${cls}" data-goto="${i}">${i + 1}</button>`;
+              })
+              .join("")}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function submitExam(auto) {
+    const exam = state.exam;
+    if (!exam || exam.submitted) return;
+    const unanswered = exam.questions.filter((q) => q.selected == null).length;
+    if (!auto && unanswered > 0) {
+      const ok = confirm(`${unanswered} টি প্রশ্নের উত্তর দেওয়া হয়নি। তারপরও জমা দিতে চান?`);
+      if (!ok) return;
+    }
+    stopExamTimer();
+    exam.submitted = true;
+    exam.endedAt = Date.now();
+    state.practiceMode = "examResult";
+    render();
+  }
+
+  function renderExamResult(el) {
+    const exam = state.exam;
+    if (!exam) return;
+    const total = exam.questions.length;
+    const correct = exam.questions.filter((q) => q.selected === q.entry.i).length;
+    const wrong = exam.questions.filter((q) => q.selected != null && q.selected !== q.entry.i).length;
+    const skipped = total - correct - wrong;
+    const pct = Math.round((correct / total) * 100);
+    const timeUsedSec = exam.timeLimitSec - exam.remainingSec;
+
+    el.innerHTML = `
+      <div class="view-pad practice-mode">
+        <div class="practice-topbar"><button class="text-btn" id="exit-practice">← ফিরে যান</button></div>
+        <div class="practice-summary">
+          ${STAR_DIVIDER}
+          <h3>পরীক্ষা শেষ!</h3>
+          <p class="quiz-score-text">আপনি ${total} টির মধ্যে ${correct} টি সঠিক উত্তর দিয়েছেন</p>
+          <div class="summary-stats">
+            <div class="stat-pill good">${pct}% সঠিক</div>
+            <div class="stat-pill bad">${wrong} টি ভুল</div>
+            <div class="stat-pill neutral">${skipped} টি বাদ</div>
+          </div>
+          <p class="exam-time-used">ব্যবহৃত সময়: ${fmtTime(timeUsedSec)} / ${fmtTime(exam.timeLimitSec)}</p>
+          <button class="mode-card" id="review-exam">${ICON.grid}<div class="mode-card-text"><h3>উত্তর পর্যালোচনা করুন</h3><p>প্রতিটি প্রশ্নের সঠিক ও আপনার উত্তর দেখুন</p></div></button>
+          <button class="mode-card restart-btn" id="retake-exam">${ICON.shuffle} নতুন পরীক্ষা সাজান</button>
+        </div>
+        <div id="exam-review-area"></div>
+      </div>`;
+  }
+
+  function renderExamReview() {
+    const exam = state.exam;
+    const area = document.getElementById("exam-review-area");
+    if (!exam || !area) return;
+    area.innerHTML = `<div class="card-grid exam-review-list">
+      ${exam.questions
+        .map((q, i) => {
+          const yourAnswer = q.options.find((o) => o.i === q.selected);
+          const isCorrect = q.selected === q.entry.i;
+          const isSkipped = q.selected == null;
+          return `<div class="word-card exam-review-card">
+            <div class="exam-review-top">
+              <span class="exam-review-num">প্রশ্ন ${i + 1}</span>
+              <span class="exam-review-status ${isSkipped ? "skipped" : isCorrect ? "correct" : "wrong"}">
+                ${isSkipped ? "বাদ দেওয়া" : isCorrect ? "সঠিক" : "ভুল"}
+              </span>
+            </div>
+            <div class="arabic-word" dir="rtl" lang="ar" style="text-align:center;margin:8px 0;">${esc(q.entry.a)}</div>
+            <div class="exam-review-answers">
+              <div class="bn-word">সঠিক উত্তর: ${esc(q.entry.b)}</div>
+              ${!isSkipped && !isCorrect ? `<div class="en-word exam-wrong-answer">আপনার উত্তর: ${esc(yourAnswer ? yourAnswer.b : "")}</div>` : ""}
+            </div>
+          </div>`;
+        })
+        .join("")}
+    </div>`;
+  }
+
   function render() {
     renderHeader();
     renderUnitMenu();
@@ -374,12 +708,14 @@
       return renderUnitMenu();
     }
     const unitRow = t.closest(".unit-row");
-    if (unitRow) {
+    if (unitRow && unitRow.dataset.unit !== undefined) {
       state.unit = unitRow.dataset.unit;
       state.unitMenuOpen = false;
       state.visibleCount = 40;
       state.flash = null;
       state.quiz = null;
+      stopExamTimer();
+      state.exam = null;
       state.practiceMode = null;
       return render();
     }
@@ -398,10 +734,16 @@
       state.quiz = null;
       return render();
     }
+    if (t.closest("#start-exam-setup")) {
+      state.practiceMode = "examSetup";
+      return render();
+    }
     if (t.closest("#exit-practice")) {
+      stopExamTimer();
       state.practiceMode = null;
       state.flash = null;
       state.quiz = null;
+      state.exam = null;
       return render();
     }
     if (t.closest("#restart-flash")) {
@@ -449,6 +791,106 @@
       state.quiz.selected = null;
       state.quiz.options = null;
       return render();
+    }
+
+    /* ---- EXAM SETUP ---- */
+    const countChip = t.closest("[data-count]");
+    if (countChip) {
+      state.examSetup.count = Number(countChip.dataset.count);
+      state.examSetup.customCount = "";
+      return renderExamSetup(document.getElementById("view-practice"));
+    }
+    const minuteChip = t.closest("[data-minutes]");
+    if (minuteChip) {
+      state.examSetup.minutes = Number(minuteChip.dataset.minutes);
+      state.examSetup.customMinutes = "";
+      return renderExamSetup(document.getElementById("view-practice"));
+    }
+    const sourceBtn = t.closest("[data-source]");
+    if (sourceBtn) {
+      state.examSetup.source = sourceBtn.dataset.source;
+      return renderExamSetup(document.getElementById("view-practice"));
+    }
+    if (t.closest("#begin-exam")) {
+      return startExam();
+    }
+
+    /* ---- EXAM RUNNER ---- */
+    if (t.closest("#exam-speak")) {
+      return speakArabic(t.closest("#exam-speak").dataset.text);
+    }
+    const examOpt = t.closest("[data-exam-opt]");
+    if (examOpt && state.exam) {
+      const exam = state.exam;
+      exam.questions[exam.idx].selected = Number(examOpt.dataset.examOpt);
+      return renderExam(document.getElementById("view-practice"));
+    }
+    if (t.closest("#toggle-flag") && state.exam) {
+      const exam = state.exam;
+      exam.questions[exam.idx].flagged = !exam.questions[exam.idx].flagged;
+      return renderExam(document.getElementById("view-practice"));
+    }
+    if (t.closest("#exam-prev") && state.exam) {
+      if (state.exam.idx > 0) state.exam.idx--;
+      return renderExam(document.getElementById("view-practice"));
+    }
+    if (t.closest("#exam-next") && state.exam) {
+      if (state.exam.idx < state.exam.questions.length - 1) state.exam.idx++;
+      return renderExam(document.getElementById("view-practice"));
+    }
+    if (t.closest("#open-exam-nav") && state.exam) {
+      state.exam.navOpen = true;
+      return renderExam(document.getElementById("view-practice"));
+    }
+    if (t.closest("#close-exam-nav") && state.exam) {
+      state.exam.navOpen = false;
+      return renderExam(document.getElementById("view-practice"));
+    }
+    if (t.id === "exam-nav-backdrop" && state.exam) {
+      state.exam.navOpen = false;
+      return renderExam(document.getElementById("view-practice"));
+    }
+    const gotoBtn = t.closest("[data-goto]");
+    if (gotoBtn && state.exam) {
+      state.exam.idx = Number(gotoBtn.dataset.goto);
+      state.exam.navOpen = false;
+      return renderExam(document.getElementById("view-practice"));
+    }
+    if (t.closest("#submit-exam")) {
+      return submitExam(false);
+    }
+
+    /* ---- EXAM RESULT ---- */
+    if (t.closest("#review-exam")) {
+      return renderExamReview();
+    }
+    if (t.closest("#retake-exam")) {
+      state.exam = null;
+      state.practiceMode = "examSetup";
+      return render();
+    }
+  });
+
+  /* ---- EXAM SETUP: checkboxes + custom number inputs (delegated 'change'/'input') ---- */
+  document.addEventListener("change", (ev) => {
+    const cb = ev.target.closest("[data-unit-check]");
+    if (cb) {
+      const u = cb.dataset.unitCheck;
+      const idx = state.examSetup.selectedUnits.indexOf(u);
+      if (cb.checked && idx === -1) state.examSetup.selectedUnits.push(u);
+      if (!cb.checked && idx !== -1) state.examSetup.selectedUnits.splice(idx, 1);
+      renderExamSetup(document.getElementById("view-practice"));
+    }
+  });
+
+  document.addEventListener("input", (ev) => {
+    if (ev.target.id === "custom-count") {
+      state.examSetup.customCount = ev.target.value;
+      document.querySelectorAll("[data-count]").forEach((b) => b.classList.remove("selected"));
+    }
+    if (ev.target.id === "custom-minutes") {
+      state.examSetup.customMinutes = ev.target.value;
+      document.querySelectorAll("[data-minutes]").forEach((b) => b.classList.remove("selected"));
     }
   });
 

@@ -315,6 +315,130 @@ button { font-family: inherit; }
 }
 .install-banner .dismiss { background: none; color: var(--deep2); padding: 4px; margin-left: 4px; }
 
+/* ---- EXAM SETUP ---- */
+.exam-setup-block { display: flex; flex-direction: column; gap: 6px; }
+.exam-setup-label {
+  font-family: 'Noto Serif Bengali', serif; font-weight: 600; font-size: 13px;
+  color: var(--deep); margin: 14px 0 2px;
+}
+.exam-chip-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.exam-chip {
+  padding: 9px 16px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--paper-card); color: var(--ink); cursor: pointer;
+  font-family: 'Noto Serif Bengali', serif; font-size: 13px;
+}
+.exam-chip.selected { background: var(--deep); color: var(--gold-bright); border-color: var(--deep); }
+.exam-custom-input {
+  width: 90px; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--paper-card); color: var(--ink); font-size: 13px;
+  font-family: 'Noto Serif Bengali', serif;
+}
+.exam-custom-input::placeholder { color: #a89a7c; }
+.exam-source-list { display: flex; flex-direction: column; gap: 6px; }
+.exam-source-list .unit-row {
+  border: 1px solid var(--line); border-radius: 12px; margin-bottom: 0;
+  background: var(--paper-card);
+}
+.exam-source-list .unit-row.selected { border-color: var(--gold); background: rgba(184,147,76,0.1); }
+.exam-unit-checks {
+  max-height: 220px; overflow-y: auto; border: 1px solid var(--line);
+  border-radius: 12px; padding: 6px 4px; background: var(--paper-card);
+}
+.exam-check-row {
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px;
+  font-family: 'Noto Serif Bengali', serif; font-size: 13px; color: var(--ink);
+  border-bottom: 1px solid #f0e9d3; cursor: pointer;
+}
+.exam-check-row:last-child { border-bottom: none; }
+.exam-check-row input { accent-color: var(--gold); width: 16px; height: 16px; }
+.exam-start-btn { margin-top: 18px; }
+.exam-hint {
+  text-align: center; font-size: 11.5px; color: var(--muted); margin-top: 8px;
+  font-family: 'Noto Serif Bengali', serif;
+}
+
+/* ---- EXAM RUNNER ---- */
+.exam-wrap { display: flex; flex-direction: column; }
+.exam-topbar {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; background: var(--paper-card); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 10;
+}
+.exam-timer {
+  display: flex; align-items: center; gap: 5px; color: var(--deep);
+  font-weight: 700; font-size: 13.5px; font-family: 'Inter', sans-serif;
+}
+.exam-timer.low-time { color: var(--wrong); }
+.exam-nav-btn {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(184,147,76,0.12); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 12px; font-size: 12px; color: var(--deep);
+  cursor: pointer; margin-left: auto;
+}
+.exam-submit-btn {
+  background: var(--deep); color: var(--gold-bright); border: none;
+  border-radius: 999px; padding: 7px 14px; font-size: 12.5px; cursor: pointer;
+  font-family: 'Noto Serif Bengali', serif;
+}
+.exam-timer-track { height: 3px; background: var(--line); }
+.exam-timer-bar { height: 100%; background: var(--gold); transition: width 1s linear; }
+.exam-body { padding-top: 16px; }
+.exam-q-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.flag-btn { color: var(--muted); }
+.flag-btn.active { color: #b8385c; }
+.quiz-option.picked { background: rgba(184,147,76,0.18); border-color: var(--gold); }
+.exam-footer-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 18px; gap: 8px;
+}
+.exam-answered-count {
+  font-size: 11px; color: var(--muted); font-family: 'Noto Serif Bengali', serif; text-align: center;
+}
+
+/* ---- EXAM NAV GRID ---- */
+.exam-nav-menu { max-height: 78vh; }
+.exam-nav-legend {
+  display: flex; gap: 14px; padding: 10px 16px; font-size: 11px; color: var(--muted);
+  font-family: 'Noto Serif Bengali', serif; border-bottom: 1px solid var(--line);
+}
+.exam-nav-legend .dot {
+  display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--paper); border: 1px solid var(--line); margin-right: 4px;
+}
+.exam-nav-legend .dot.answered { background: #dcecdf; border-color: #276b3f; }
+.exam-nav-legend .dot.flagged { background: #f6dfc4; border-color: var(--gold); }
+.exam-nav-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;
+  padding: 14px 16px; overflow-y: auto;
+}
+.exam-nav-cell {
+  aspect-ratio: 1; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--paper-card); color: var(--ink); font-size: 12px; cursor: pointer;
+}
+.exam-nav-cell.answered { background: #dcecdf; border-color: #276b3f; color: #205c35; }
+.exam-nav-cell.flagged { background: #f6dfc4; border-color: var(--gold); }
+.exam-nav-cell.current { outline: 2px solid var(--deep); outline-offset: 1px; }
+
+/* ---- EXAM RESULT ---- */
+.stat-pill.neutral { background: #ece5d3; color: var(--muted); }
+.exam-time-used {
+  text-align: center; font-size: 12px; color: var(--muted); margin: -8px 0 18px;
+  font-family: 'Noto Serif Bengali', serif;
+}
+.exam-review-list { margin-top: 14px; }
+.exam-review-card { padding: 12px 14px; }
+.exam-review-top { display: flex; align-items: center; justify-content: space-between; }
+.exam-review-num { font-size: 11.5px; color: var(--muted); font-family: 'Noto Serif Bengali', serif; }
+.exam-review-status {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  font-family: 'Noto Serif Bengali', serif;
+}
+.exam-review-status.correct { background: #dcecdf; color: #276b3f; }
+.exam-review-status.wrong { background: #f3e3de; color: var(--wrong); }
+.exam-review-status.skipped { background: #ece5d3; color: var(--muted); }
+.exam-review-answers { margin-top: 4px; }
+.exam-wrong-answer { color: var(--wrong) !important; font-style: normal !important; margin-top: 2px; }
+
 @media (prefers-reduced-motion: reduce) {
   .chev, .fav-btn svg { transition: none; }
 }
